@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>기록 편집기 · yangarch</title><link rel="stylesheet" href="/editor.css"><script src="/editor.js" defer></script></head>
+<body>
+<header class="topbar"><a class="brand" href="/">yangarch<span>.</span> <span class="editor-name">기록 편집기</span></a><span class="local-badge">이 맥에 저장</span></header>
+<div class="layout">
+  <aside class="sidebar" aria-label="저장된 글">
+    <div class="sidebar-heading"><h1>내 기록</h1><button id="new-post" class="primary" type="button">새 글</button></div>
+    <button id="import-post" type="button">URL에서 가져오기</button>
+    <p class="sidebar-note">초안을 저장해도 인터넷에 공개되지 않습니다.</p>
+    <div id="post-list" class="post-list"></div>
+    <a class="site-link" href="http://127.0.0.1:4173/records/" target="_blank" rel="noopener noreferrer">사이트 미리보기 ↗</a>
+  </aside>
+  <main id="main">
+    <div id="empty" class="empty"><p class="eyebrow">기록 편집기</p><h2>글을 작성하거나<br>저장한 초안을 열어보세요.</h2><p>커뮤니티에 쓴 글도 이곳에 옮겨둘 수 있습니다.<br>공개할 글은 미리보기로 확인한 뒤 선택하세요.</p><button id="first-post" class="primary" type="button">새 글 쓰기</button></div>
+    <form id="post-form" hidden>
+      <div class="editor-toolbar"><p id="save-state" role="status" aria-live="polite">저장됨</p><div class="toolbar-actions"><button id="save" type="submit">초안 저장</button><button id="preview" type="button">미리보기</button><button id="prepare" class="primary" type="button">공개본 준비</button></div></div>
+      <div class="sheet">
+        <p id="import-summary" class="import-summary" hidden></p>
+        <label class="title-label" for="title">제목</label><input id="title" class="title-input" maxlength="200" placeholder="제목을 입력하세요" autocomplete="off">
+        <div class="metadata"><label>분류<select id="category" aria-label="분류"><option value="cycling">자전거</option><option value="swimming">수영</option><option value="making">만드는 일</option></select></label><label>작성일<input id="date" type="date" required></label></div>
+        <fieldset class="source-fields"><legend>다른 곳에 쓴 글이라면 <span>선택</span></legend><label>원문 주소<input id="source-url" type="url" placeholder="https://…" autocomplete="off"></label><label>출처 이름<input id="source-label" maxlength="200" placeholder="예: 네이버 블로그" autocomplete="off"></label><button id="import-source" class="import-source" type="button">이 주소에서 새 초안 가져오기</button></fieldset>
+        <div class="body-heading"><h2>본문</h2><p>글과 사진을 순서대로 배치할 수 있습니다.</p></div>
+        <div id="blocks" class="blocks"></div>
+        <div class="insert-actions"><button id="add-text" type="button">＋ 글 추가</button><button id="add-image" type="button">＋ 사진 추가</button><input id="image-file" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></div>
+        <p class="photo-note">JPG · PNG · WebP, 한 장에 20MB까지. 원본은 맥에 보관하고, 공개용 사본에서는 사진 메타데이터를 제거합니다.</p>
+      </div>
+      <p class="publish-note">‘공개본 준비’는 사이트에 넣을 파일을 만드는 단계입니다. 실제 서버 반영은 별도로 진행합니다.</p>
+    </form>
+  </main>
+</div>
+<div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+<dialog id="import-dialog" class="import-dialog" aria-labelledby="import-title"><form id="import-form">
+  <div class="import-heading"><h2 id="import-title">URL에서 가져오기</h2><button id="close-import" type="button" aria-label="가져오기 닫기">닫기</button></div>
+  <p>디시나 네이버 블로그에 쓴 글을 사진과 함께 새 초안으로 저장합니다.</p>
+  <label>가져올 글 주소<input id="import-url" type="url" required maxlength="4096" placeholder="https://gall.dcinside.com/… 또는 https://blog.naver.com/…" autocomplete="off"></label>
+  <label>기록 분류<select id="import-category" aria-label="가져올 글 분류"><option value="cycling">자전거</option><option value="swimming">수영</option><option value="making">만드는 일</option></select></label>
+  <p class="import-help">기존 글을 덮어쓰거나 자동으로 공개하지 않습니다. 사진까지 모두 가져온 뒤 미리보기에서 확인해 주세요.</p>
+  <p id="import-status" role="status" aria-live="polite"></p>
+  <button id="confirm-import" class="primary" type="submit">초안으로 가져오기</button>
+</form></dialog>
+<dialog id="review" aria-labelledby="review-title"><div class="review-heading"><div><h2 id="review-title">미리보기</h2><p id="review-note">실제 페이지 모습으로 확인하세요.</p></div><button id="close-review" type="button" aria-label="미리보기 닫기">닫기</button></div><iframe id="preview-frame" title="기록 본문 미리보기" sandbox="allow-same-origin"></iframe><div class="review-actions"><p id="review-result" role="status"></p><button id="confirm-prepare" class="primary" type="button" hidden>이 글의 공개본 준비</button></div></dialog>
+</body></html>

@@ -1,0 +1,1 @@
+{"name":"yangarch-home","private":true,"version":"1.0.0","scripts":{"build":"python3 scripts/build.py","dev":"python3 scripts/preview.py","check":"python3 scripts/check.py"}}
