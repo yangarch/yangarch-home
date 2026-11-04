@@ -300,3 +300,58 @@ $('confirm-publish').addEventListener('click',() => run(async () => {
     }
   } finally { publishing = false; }
 }));
+
+function statisticsTable(labels,rows) {
+  const table=node('table',undefined,'statistics-table');
+  const head=node('thead');const header=node('tr');
+  for (const text of labels) header.append(node('th',text));
+  head.append(header);table.append(head);
+  const body=node('tbody');
+  for (const values of rows) {const row=node('tr');for (const value of values) row.append(node('td',String(value ?? '')));body.append(row);}
+  if (!rows.length) {const row=node('tr');const cell=node('td','아직 집계된 기록이 없습니다.');cell.colSpan=labels.length;row.append(cell);body.append(row);}
+  table.append(body);return table;
+}
+async function loadStatistics() {
+  $('statistics-state').textContent='비공개 접속 통계를 가져오고 있습니다…';
+  try {
+    const value=await api('/api/statistics/report',{});
+    const days=Object.entries(value.days).sort(([a],[b])=>b.localeCompare(a));
+    const metrics=node('div',undefined,'statistics-metrics');
+    const cutoff=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(Date.now()-6*86400000));
+    const last=days.filter(([day])=>day>=cutoff);
+    for (const [label,key] of [['최근 7일 요청','requests'],['페이지 요청','page_requests'],['추정 방문자 · 일별 합계','estimated_visitors'],['봇·자동 요청','automated']]) {
+      const metric=node('div',undefined,'statistics-metric');
+      metric.append(node('strong',last.reduce((sum,[,row])=>sum+Number(row[key] || 0),0).toLocaleString('ko-KR')),node('span',label));metrics.append(metric);
+    }
+    $('statistics-content').replaceChildren(metrics,node('h3','일별 접속 로그'));
+    $('statistics-content').append(statisticsTable(['날짜','요청','페이지','추정 방문자','자동 요청','오류','제외 요청'],days.slice(0,31).map(([day,row])=>[day,row.requests || 0,row.page_requests || 0,row.estimated_visitors || 0,row.automated || 0,row.errors || 0,row.excluded || 0])));
+    $('statistics-content').append(node('h3','장기 보관된 방문 분석 집계'));
+    $('statistics-content').append(statisticsTable(['날짜','종류','페이지·이벤트','횟수'],value.browser_daily.slice(0,100).map(row=>[row.day,row.dimension,row.label,row.value])));
+    $('statistics-content').append(node('h3','최근 접속 — IP는 보기 버튼을 누르면 표시됩니다.'));
+    const ipToggle=node('button','접속 IP 보기');ipToggle.type='button';let reveal=false;
+    const recent=node('div');
+    const renderRecent=()=>{recent.replaceChildren(statisticsTable(['시간','IP','경로','응답','분류'],value.latest.slice(0,50).map(row=>[new Date(row.time).toLocaleString('ko-KR'),reveal ? row.ip : '숨김',row.path,row.status,row.excluded ? '분석 제외' : row.client])));};
+    ipToggle.addEventListener('click',()=>{reveal=!reveal;ipToggle.textContent=reveal ? '접속 IP 숨기기' : '접속 IP 보기';renderRecent();});
+    renderRecent();$('statistics-content').append(ipToggle,recent);
+    $('statistics-state').textContent='마지막 집계 '+new Date(value.generated_at).toLocaleString('ko-KR')+(value.truncated ? ' · 로그 처리 한도에 도달해 일부 기록이 생략됐습니다.' : '');
+  } catch (error) {$('statistics-state').textContent=error.message;}
+}
+$('open-statistics').addEventListener('click',()=>run(async()=>{
+  $('statistics-content').replaceChildren();$('statistics-dialog').showModal();await loadStatistics();
+}));
+$('refresh-statistics').addEventListener('click',()=>run(loadStatistics));
+$('close-statistics').addEventListener('click',()=>$('statistics-dialog').close());
+$('open-umami').addEventListener('click',()=>{
+  const popup=window.open('about:blank','_blank');
+  if (popup) popup.opener=null;
+  run(async()=>{
+    try {
+      $('statistics-state').textContent='비공개 방문 분석 화면에 연결하고 있습니다…';
+      const result=await api('/api/statistics/open',{});
+      if (result.url!=='http://127.0.0.1:4390/') throw new Error('통계 연결 주소를 확인하지 못했습니다.');
+      if (popup) popup.location.href=result.url;
+      else {const link=node('a','방문 분석 화면 열기 ↗');link.href=result.url;link.target='_blank';link.rel='noopener noreferrer';$('statistics-content').prepend(link);}
+      $('statistics-state').textContent='이 맥에서만 방문 분석 화면에 연결했습니다.';
+    } catch (error) {if (popup) popup.close();throw error;}
+  });
+});

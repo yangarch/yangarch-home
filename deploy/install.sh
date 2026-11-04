@@ -18,6 +18,10 @@ CURRENT=$SITE_ROOT/home/current
 umask 077
 [[ -f "$CONFIG" && -L "$ENABLED" && "$(readlink -f "$ENABLED")" == "$CONFIG" ]] || { echo 'Unexpected apex nginx layout; stopping.' >&2; exit 1; }
 [[ -f "$SITE_ROOT/portfolio/giseok-chung-data-portfolio.pdf" ]] || { echo 'Existing PDF is missing; stopping.' >&2; exit 1; }
+if [[ ! -f /etc/systemd/system/yangarch-home-analytics.service ]]; then
+  echo "Run deploy/setup-analytics.sh first to enable the reviewed collector and private logs." >&2
+  exit 1
+fi
 python3 -I "$PROJECT_ROOT/scripts/check.py"
 PDF_BEFORE=$(sha256sum "$SITE_ROOT/portfolio/giseok-chung-data-portfolio.pdf" | cut -d ' ' -f 1)
 mkdir -p "$BACKUP"

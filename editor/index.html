@@ -11,6 +11,7 @@
     <div id="post-list" class="post-list"></div>
     <a class="site-link" href="http://127.0.0.1:4173/records/" target="_blank" rel="noopener noreferrer">사이트 미리보기 ↗</a>
     <button id="open-publish" class="primary" type="button">서버에 반영</button>
+    <button id="open-statistics" type="button">방문 통계</button>
   </aside>
   <main id="main">
     <div id="empty" class="empty"><p class="eyebrow">기록 편집기</p><h2>글을 작성하거나<br>저장한 초안을 열어보세요.</h2><p>커뮤니티에 쓴 글도 이곳에 옮겨둘 수 있습니다.<br>공개할 글은 미리보기로 확인한 뒤 선택하세요.</p><button id="first-post" class="primary" type="button">새 글 쓰기</button></div>
@@ -31,6 +32,14 @@
   </main>
 </div>
 <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+<dialog id="statistics-dialog" class="statistics-dialog" aria-labelledby="statistics-title">
+  <div class="import-heading"><h2 id="statistics-title">방문 통계</h2><button id="close-statistics" type="button" aria-label="방문 통계 닫기">닫기</button></div>
+  <p>서버의 비공개 통계입니다. 접속 요청에는 봇·본인 방문·검수 요청이 포함될 수 있습니다.</p>
+  <div class="publish-actions"><button id="open-umami" class="primary" type="button">방문 분석 화면 열기 ↗</button><button id="refresh-statistics" type="button">접속 통계 새로고침</button><a href="https://yangarch.net/privacy/?analytics=off" target="_blank" rel="noopener noreferrer">이 브라우저 방문 제외 ↗</a></div>
+  <p id="statistics-state" role="status" aria-live="polite"></p>
+  <div id="statistics-content"></div>
+  <p class="import-help">방문 분석 화면은 SSH를 통해 이 맥에서만 연결합니다. 초기 로그인 정보는 별도로 보관한 비공개 로그인 파일에서 확인하세요. 접속 로그는 14일, 상세 이벤트는 90일, 일별 집계는 1년 보관합니다.</p>
+</dialog>
 <dialog id="publish-dialog" class="publish-dialog" aria-labelledby="publish-title">
   <div class="import-heading"><h2 id="publish-title">서버에 반영</h2><button id="close-publish" type="button" aria-label="서버 반영 창 닫기">닫기</button></div>
   <p>준비된 공개본으로 사이트를 갱신합니다. 아래 글과 사진이 공개됩니다.</p>

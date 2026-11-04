@@ -171,6 +171,11 @@ class EditorTest(unittest.TestCase):
             self.assertEqual(request('/api/posts','POST',{'Cookie':cookie},{} )[0],403)
             self.assertEqual(request('/api/publish','POST',{'Cookie':cookie},{'release_id':'example'})[0],403)
             self.assertEqual(request('/api/publish/check','POST',{'Cookie':cookie},{})[0],403)
+            for path in ('/api/statistics/report','/api/statistics/open'):
+                self.assertEqual(request(path,'POST',{'Cookie':cookie},{})[0],403)
+                with patch.object(server.statistics,'report',return_value={'days':{}}), patch.object(server.statistics,'open_admin',return_value={'url':'http://127.0.0.1:4390/'}):
+                    self.assertEqual(request(path,'POST',auth,{})[0],200)
+                    self.assertEqual(request(path,'POST',auth,{'command':'untrusted'})[0],400)
             self.assertEqual(request('/api/posts','POST',{**auth,'Origin':'https://evil.example'},{} )[0],403)
             self.assertEqual(request('/api/posts','POST',{**auth,'X-Editor-Token':'wrong'},{} )[0],403)
             self.assertEqual(request('/api/import','POST',{'Cookie':cookie},{'url':'https://example.com','category':'cycling'})[0],403)

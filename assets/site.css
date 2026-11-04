@@ -76,3 +76,5 @@
  .service-destinations{gap:20px}
  .service-address{font-size:13px}
 }
+
+.hero-links button{display:inline-flex;align-items:center;min-height:44px;font-size:var(--small);border:0}.hero-links button.text-link{background:transparent;color:var(--ink);padding:10px 0}

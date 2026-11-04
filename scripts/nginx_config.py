@@ -2,6 +2,7 @@
 """Render exact-path routing; unknown paths never reach the filesystem."""
 import json
 from pathlib import Path
+from analytics_nginx import HTTP_CONFIG, COLLECTOR, LOG_LINE
 ROOT=Path(__file__).resolve().parents[1]
 
 def routes(headers='/etc/nginx/snippets/yangarch-home-headers.conf', legacy=True):
@@ -22,13 +23,13 @@ def routes(headers='/etc/nginx/snippets/yangarch-home-headers.conf', legacy=True
     return '\n\n'.join(blocks)+'\n'
 
 def production():
-    return '''# Affects only yangarch.net; included by the existing nginx http context.
+    return HTTP_CONFIG+'''# Affects only yangarch.net; included by the existing nginx http context.
 limit_req_zone $binary_remote_addr zone=yangarch_home:10m rate=10r/s;
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name yangarch.net;
-    root /var/www/yangarch.net/home/current;
+'''+LOG_LINE+'''    root /var/www/yangarch.net/home/current;
     server_tokens off;
     autoindex off;
     disable_symlinks on from=$document_root;
@@ -38,19 +39,19 @@ server {
     keepalive_timeout 15s;
     limit_req zone=yangarch_home burst=40 nodelay;
     limit_req_status 429;
-    if ($request_method !~ ^(GET|HEAD)$) { return 405; }
+    if ($home_method_allowed = 0) { return 405; }
     include /etc/nginx/snippets/yangarch-home-headers.conf;
     ssl_certificate /etc/letsencrypt/live/yangarch.net/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/yangarch.net/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-    include /etc/nginx/snippets/yangarch-home-routes.conf;
+'''+COLLECTOR+'''    include /etc/nginx/snippets/yangarch-home-routes.conf;
 }
 server {
     listen 80;
     listen [::]:80;
     server_name yangarch.net;
-    server_tokens off;
+'''+LOG_LINE+'''    server_tokens off;
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/certbot;
         default_type text/plain;

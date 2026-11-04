@@ -68,6 +68,10 @@ def check():
             file=manifest['routes'][target]
             if parsed.fragment:assert parsed.fragment in pages[file].ids,(rel,'broken anchor',link)
     for src in (ROOT/'assets').glob('*.js'):
-        assert not re.search(r'innerHTML|outerHTML|eval\s*\(|new Function|document\.write|fetch\s*\(',src.read_text()),'Unsafe or unexpected network/DOM operation'
+        denied_js=r'innerHTML|outerHTML|eval\s*\(|new Function|document\.write'
+        assert not re.search(denied_js,src.read_text()),'Unsafe DOM operation'
+        if src.name=='analytics.js':
+            assert re.findall(r'fetch\(([^,]+)',src.read_text())==["'/__analytics'"], 'Unexpected analytics destination'
+        else:assert not re.search(r'fetch\s*\(',src.read_text()),'Unexpected network operation'
     print(f'PASS: {len(paths)} public files, {len(pages)} pages, local links, anchors, content boundary, hashes, no inline scripts/styles or secret patterns.')
 if __name__=='__main__':check()

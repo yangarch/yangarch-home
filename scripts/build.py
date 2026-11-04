@@ -13,7 +13,7 @@ from record_media import clean_jpeg, first_text, image_path, media_paths
 from content_policy import source_policy
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist'
-ASSETS = ('site.css', 'site.js', 'favicon.svg')
+ASSETS = ('site.css', 'site.js', 'analytics.js', 'favicon.svg')
 ORIGIN = 'https://yangarch.net'
 
 def esc(value):
@@ -58,8 +58,8 @@ def service_access(project):
 def document(title, description, body, path='/', detail=False):
     canonical = ORIGIN + path
     return f'''<!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>{esc(title)}</title><meta name="description" content="{esc(description)}"><link rel="canonical" href="{esc(canonical)}"><meta property="og:type" content="website"><meta property="og:locale" content="ko_KR"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{esc(canonical)}"><link rel="icon" type="image/svg+xml" href="/assets/favicon.svg"><link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script></head>
-<body><a class="skip-link" href="#main">본문으로 바로가기</a><header class="site-header wrap"><a class="wordmark" href="/" aria-label="yangarch 홈">yangarch<span aria-hidden="true">.</span></a><nav aria-label="주 메뉴"><a href="/#work">프로젝트</a><a href="/#about">소개</a><a href="/#records">기록</a><a href="/#contact">연락</a></nav></header><main id="main" tabindex="-1">{body}</main><footer class="site-footer wrap"><a href="/" class="footer-name">yangarch.</a><div><span>© 2026 정기석</span><a href="#main">위로 ↑</a></div></footer></body></html>'''
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>{esc(title)}</title><meta name="description" content="{esc(description)}"><link rel="canonical" href="{esc(canonical)}"><meta property="og:type" content="website"><meta property="og:locale" content="ko_KR"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{esc(canonical)}"><link rel="icon" type="image/svg+xml" href="/assets/favicon.svg"><link rel="stylesheet" href="/assets/site.css"><script src="/assets/site.js" defer></script><script src="/assets/analytics.js" defer></script></head>
+<body><a class="skip-link" href="#main">본문으로 바로가기</a><header class="site-header wrap"><a class="wordmark" href="/" aria-label="yangarch 홈">yangarch<span aria-hidden="true">.</span></a><nav aria-label="주 메뉴"><a href="/#work">프로젝트</a><a href="/#about">소개</a><a href="/#records">기록</a><a href="/#contact">연락</a></nav></header><main id="main" tabindex="-1">{body}</main><footer class="site-footer wrap"><a href="/" class="footer-name">yangarch.</a><div><span>© 2026 정기석</span><a href="/privacy/">방문 정보 안내</a><a href="#main">위로 ↑</a></div></footer></body></html>'''
 
 def home(data):
     projects = data['projects']
@@ -75,6 +75,9 @@ def home(data):
 <section id="about" class="about-section wrap" aria-labelledby="about-title"><div class="about-sheet"><h2 id="about-title">소개</h2><div><p class="about-copy">만든 서비스들이 늘어나 도메인이 헷갈리기 시작했습니다.<br>모아두는 페이지가 필요해 만들었어요.</p><p class="signature">정기석 <span>Giseok Chung</span></p><div class="about-links">{profile(data['github'],'GitHub에서 작업 보기')}{profile(data['linkedin'],'LinkedIn에서 경력 보기')}</div></div></div></section>
 <section id="records" class="records-section wrap" aria-labelledby="records-title"><div><h2 id="records-title">기록</h2><p>자전거를 타고, 수영을 하고, 그날의 경험을 남깁니다.<br>커뮤니티에 남긴 후기와 개인적인 기록도 오래 간직할 수 있도록 조금씩 모아 가려 합니다.</p><a class="text-link" href="/records/">전체 기록 보기 {arrow()}</a></div><div class="record-topics">{topics}</div></section>
 <section id="contact" class="contact-section wrap" aria-labelledby="contact-title"><div class="contact-sheet"><h2 id="contact-title">연락</h2><div><p>프로젝트 이야기나 함께할 일에 대한 연락은<br>LinkedIn으로 이어 주세요.</p><div class="contact-links">{profile(data['linkedin'],'LinkedIn으로 연락하기')}{profile(data['github'],'GitHub')}</div></div></div></section>''')
+
+def privacy_page():
+    return document('방문 정보 안내 — 정기석 · yangarch', '홈페이지 방문 정보의 수집 항목과 보관 기간, 분석 제외 방법.', '''<article class="detail-page wrap"><a class="breadcrumb" href="/">← 홈</a><header class="detail-header"><h1>방문 정보 안내</h1><p>어떤 글과 프로젝트를 찾아보는지 확인하고, 홈페이지의 오류와 비정상 접근에 대응하기 위해 방문 정보를 수집합니다.</p></header><div class="project-story"><section class="story-section"><h2>수집하는 정보</h2><p>접속 시간, 요청한 페이지 경로, IP 주소, 응답 코드, 전송량, 응답 시간, 유입 사이트, 브라우저 정보가 서버 접속 로그에 기록됩니다. 불필요한 URL 매개변수와 유입 주소의 세부 경로는 기록하지 않습니다.</p><p>방문 분석에는 페이지 조회, 프로젝트·서비스·외부 링크 클릭, 분류 선택, 스크롤 도달률, 화면이 활성화된 시간, 화면 크기, 언어, 시간대와 대략적인 지역을 사용합니다. 방문자 수와 체류 시간, 지역은 추정치입니다.</p></section><section class="story-section"><h2>수집하지 않는 정보</h2><p>화면 녹화, 키보드 입력, 기기 지문, 정확한 위치, 다른 사이트의 열람 기록은 수집하지 않습니다. 로그인 비밀번호, 인증 헤더와 입력한 본문도 수집하지 않습니다. 장기 방문 추적을 위한 쿠키는 사용하지 않습니다.</p></section><section class="story-section"><h2>보관과 접근</h2><p>정보는 이 홈페이지 운영자의 개인 서버에 저장하며 외부 분석 서비스로 전송하지 않습니다. 운영자만 비공개 통계 화면에서 조회합니다. 원본 접속 로그는 일별로 회전하여 14회분을 보관하고, 방문 분석 상세 이벤트는 90일, 개인을 구분하지 않는 일별 집계는 1년 보관합니다.</p></section><section class="story-section"><h2>이 브라우저의 분석 제외</h2><p>아래에서 방문 분석을 제외할 수 있습니다. 선택은 이 브라우저에 저장하며, 선택을 기억하기 위한 쿠키와 로컬 저장소만 사용합니다. 다른 브라우저에서도 별도로 선택해야 합니다. Do Not Track이나 Global Privacy Control 설정도 존중합니다. 분석을 제외해도 서비스 보호를 위한 접속 로그는 위 기간 동안 보관됩니다.</p><p id="analytics-preference" role="status">현재 선택을 확인하고 있습니다.</p><div class="hero-links"><button class="primary-link" id="exclude-analytics" type="button">이 브라우저 분석 제외</button><button class="text-link" id="allow-analytics" type="button">분석 다시 허용</button></div></section><section class="story-section"><h2>문의</h2><p>수집 항목이나 기록에 대한 문의는 홈페이지의 연락 경로를 이용해 주세요.</p><a class="text-link" href="/#contact">연락 방법 보기</a></section></div></article>''', '/privacy/')
 
 def project_page(p, data):
     sections = ''.join(f'<section class="story-section"><h2>{esc(title)}</h2><p>{esc(text)}</p></section>' for title,text in p['sections'])
@@ -151,6 +154,10 @@ def build():
         target.parent.mkdir(parents=True)
         target.write_text(project_page(project,data))
         routes['/projects/'+project['id']+'/']=str(target.relative_to(DIST))
+    privacy_target=DIST/'privacy/index.html'
+    privacy_target.parent.mkdir(parents=True,exist_ok=True)
+    privacy_target.write_text(privacy_page())
+    routes['/privacy/']='privacy/index.html'
     record_pages = {'/records/':record_index(records)}
     record_pages.update({'/records/'+slug+'/':record_index(records,slug) for slug in CATEGORIES})
     record_pages.update({record_path(entry):record_page(entry) for entry in records})
@@ -175,7 +182,7 @@ def build():
     (ROOT/'artifacts').mkdir(exist_ok=True)
     (ROOT/'artifacts/content-policy.json').write_text(json.dumps(policy,ensure_ascii=False,indent=2)+'\n')
     (ROOT/'artifacts/manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n')
-    print(f'Built {len(data["projects"])+1+len(record_pages)} pages; {len(manifest["files"])} explicitly selected public files.')
+    print(f'Built {len(data["projects"])+2+len(record_pages)} pages; {len(manifest["files"])} explicitly selected public files.')
     return manifest
 
 if __name__=='__main__': build()

@@ -26,6 +26,7 @@ from record_media import clean_jpeg, image_path, media_paths
 from records import CATEGORIES, validate_records
 from record_import import ImportProblem, normalize_source, read_article
 from publish import Publisher
+from analytics_client import Statistics
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_UPLOAD = 20_000_000
@@ -139,7 +140,7 @@ class Store:
         entry['title'] = entry['title'].strip() or '제목 없는 글'
         entry['body'] = entry['body'] or ['본문을 작성하면 여기에 표시됩니다.']
         validate_records({'entries':[entry]})
-        markup = record_page(entry).replace('<script src="/assets/site.js" defer></script>','')
+        markup = record_page(entry).replace('<script src="/assets/site.js" defer></script>','').replace('<script src="/assets/analytics.js" defer></script>','')
         # The draft is a reading preview; links must not leave the preview frame.
         markup = re.sub(r'(<a\b[^>]*?) href="[^"]*"',r'\1',markup)
         return markup.encode()
@@ -400,6 +401,12 @@ class Handler(BaseHTTPRequestHandler):
                 self.json(self.server.store.create(),201)
             elif path=='/api/import':
                 self.json(self.server.store.import_url(data['url'],data['category']),201)
+            elif path=='/api/statistics/report':
+                if data!={}:raise ValueError('잘못된 통계 조회 요청입니다.')
+                self.json(self.server.statistics.report())
+            elif path=='/api/statistics/open':
+                if data!={}:raise ValueError('잘못된 통계 연결 요청입니다.')
+                self.json(self.server.statistics.open_admin())
             elif path=='/api/publish/check':
                 if data!={}:raise ValueError('잘못된 연결 확인 요청입니다.')
                 self.json(self.server.publisher.check_connection())
@@ -427,6 +434,7 @@ def make_server(root=ROOT, port=4180, state=None):
     server = LocalServer(('127.0.0.1',port),Handler)
     server.store = Store(root,state)
     server.publisher = Publisher(root)
+    server.statistics = Statistics(root)
     server.host = '127.0.0.1:'+str(server.server_port)
     server.origin = 'http://'+server.host
     server.cookie_name = 'record_editor_'+str(server.server_port)
@@ -452,4 +460,5 @@ if __name__=='__main__':
     except KeyboardInterrupt:
         pass
     finally:
+        server.statistics.close()
         server.server_close()

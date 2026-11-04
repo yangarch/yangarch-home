@@ -9,9 +9,9 @@ PROTOCOL = 1
 HEADER_LIMIT = 1_000_000
 TOTAL_LIMIT = 256_000_000
 FILE_LIMIT = 2000
-REQUIRED = {'index.html','assets/site.css','assets/site.js','assets/favicon.svg','robots.txt','sitemap.xml','records/index.html','records/cycling/index.html','records/swimming/index.html','records/making/index.html'}
+REQUIRED = {'index.html','assets/site.css','assets/site.js','assets/analytics.js','privacy/index.html','assets/favicon.svg','robots.txt','sitemap.xml','records/index.html','records/cycling/index.html','records/swimming/index.html','records/making/index.html'}
 SLUG = r'[a-z0-9]+(?:-[a-z0-9]+)*'
-PUBLIC_FILE = re.compile(r'(?:index\.html|assets/(?:site\.css|site\.js|favicon\.svg)|robots\.txt|sitemap\.xml|projects/[a-z-]{1,64}/index\.html|records/(?:index\.html|(?:cycling|swimming|making)/index\.html|entry/'+SLUG+r'/index\.html)|media/records/'+SLUG+r'/[a-f0-9]{32}\.jpg)')
+PUBLIC_FILE = re.compile(r'(?:index\.html|privacy/index\.html|assets/(?:site\.css|site\.js|analytics\.js|favicon\.svg)|robots\.txt|sitemap\.xml|projects/[a-z-]{1,64}/index\.html|records/(?:index\.html|(?:cycling|swimming|making)/index\.html|entry/'+SLUG+r'/index\.html)|media/records/'+SLUG+r'/[a-f0-9]{32}\.jpg)')
 HASH = re.compile(r'[a-f0-9]{64}')
 
 
@@ -73,7 +73,7 @@ class StaticHTML(HTMLParser):
     def handle_starttag(self,tag,attrs):
         attrs=dict(attrs)
         if tag in {'iframe','object','embed','base','style','form'}:raise ValueError('Unsupported active HTML element')
-        if tag=='script' and (set(attrs)-{'src','defer'} or attrs.get('src')!='/assets/site.js'):raise ValueError('Unsupported script')
+        if tag=='script' and (set(attrs)-{'src','defer'} or attrs.get('src') not in {'/assets/site.js','/assets/analytics.js'}):raise ValueError('Unsupported script')
         if any(key.startswith('on') or key=='style' for key in attrs):raise ValueError('Inline executable HTML')
         for key in ('href','src'):
             value=attrs.get(key,'')

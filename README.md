@@ -86,6 +86,10 @@ Finder에서 `start-editor.command`를 더블클릭하거나 이 폴더에서 `.
 
 편집기 검증까지 실행하려면 `.local/editor-venv/bin/python -m unittest discover -s tests -p 'test_*.py'`를 사용한다. 사진 처리 패키지가 없는 기본 Python에서는 사진 처리가 필요한 편집기 검증을 건너뛴다.
 
+## 비공개 방문 통계
+
+편집기 왼쪽 **방문 통계**에서 전용 nginx 접속 로그 집계를 확인한다. **방문 분석 화면 열기**는 SSH로 Umami 관리 화면을 이 맥에만 연결한다. 최초 서버 설정, 수집 항목과 보관 기간은 [방문 통계 안내](docs/ANALYTICS.md)를 따른다.
+
 ## 로컬 제작
 
 ```bash
@@ -94,6 +98,7 @@ python3 scripts/build.py
 python3 scripts/nginx_config.py
 python3 scripts/check.py
 node --check assets/site.js
+node --check assets/analytics.js
 python3 scripts/preview.py
 ```
 

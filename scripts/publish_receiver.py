@@ -67,7 +67,7 @@ def verify_live(manifest,probe=request,sleep=time.sleep,clock=time.monotonic):
             if status==200 and hashlib.sha256(body).hexdigest()==manifest['files'][name]:break
             if clock()>=deadline:raise RuntimeError('New public content did not become ready')
             sleep(.25)
-        if not required<=set(headers) or headers['x-frame-options'].lower()!='deny' or headers['x-content-type-options'].lower()!='nosniff' or "connect-src 'none'" not in headers['content-security-policy']:raise RuntimeError('Missing security header')
+        if not required<=set(headers) or headers['x-frame-options'].lower()!='deny' or headers['x-content-type-options'].lower()!='nosniff' or not any(x in headers['content-security-policy'] for x in ("connect-src 'none'","connect-src 'self'")):raise RuntimeError('Missing security header')
         sleep(.12)
     for route in ('/.env','/.git/config','/editor/','/api/posts','/backup.zip','/content/records.json','/scripts/editor.py'):
         if probe(route)[0]!=404:raise RuntimeError('Private path is exposed')
