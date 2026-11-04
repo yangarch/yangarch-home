@@ -186,5 +186,11 @@ class ClientTest(unittest.TestCase):
             self.assertEqual(args[-1],'sudo -n -- /usr/local/sbin/yangarch-home-publish')
             self.assertIn('BatchMode=yes',args);self.assertIn('StrictHostKeyChecking=yes',args)
 
+    def test_missing_sudo_setup_is_reported_without_exposing_ssh_diagnostics(self):
+        publisher=Publisher(self.root)
+        (publisher.local/'publish.json').write_text('{"ssh_host":"example-server"}')
+        with patch('publish.subprocess.run',return_value=subprocess.CompletedProcess([],1,b'',b'sudo: a password is required\n')):
+            with self.assertRaisesRegex(PublishError,'최초 설정'):publisher.check_connection()
+
 
 if __name__=='__main__':unittest.main()

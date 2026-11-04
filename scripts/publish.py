@@ -68,6 +68,8 @@ class Publisher:
         except subprocess.TimeoutExpired:raise PublishError('서버 응답 시간이 초과됐습니다. 연결 확인으로 반영 결과를 확인해 주세요.') from None
         try:reply=decode(result.stdout)
         except (ValueError,UnicodeDecodeError):
+            if b'a password is required' in result.stderr or (b'yangarch-home-publish' in result.stderr and b'not found' in result.stderr):
+                raise PublishError('서버 최초 설정이 필요합니다. 설정을 완료한 뒤 연결 확인을 눌러 주세요.') from None
             raise PublishError('서버 배포 연결을 확인하지 못했습니다. SSH 키와 최초 서버 설정을 확인해 주세요.') from None
         if result.returncode or not isinstance(reply,dict) or not reply.get('ok') or reply.get('protocol')!=PROTOCOL:
             error=reply.get('error','') if isinstance(reply,dict) else ''
