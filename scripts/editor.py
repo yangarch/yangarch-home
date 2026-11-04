@@ -25,6 +25,7 @@ from build import record_page
 from record_media import clean_jpeg, image_path, media_paths
 from records import CATEGORIES, validate_records
 from record_import import ImportProblem, normalize_source, read_article
+from publish import Publisher
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_UPLOAD = 20_000_000
@@ -353,6 +354,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.json({'token':self.server.token,'categories':CATEGORIES})
             elif path=='/api/posts':
                 self.json(self.server.store.listing())
+            elif path=='/api/publish':
+                self.json(self.server.publisher.summary())
+            elif path=='/api/publish/job':
+                self.json({'job':self.server.publisher.job})
             elif re.fullmatch(r'/api/posts/[a-z0-9-]+',path):
                 self.json(self.server.store.load(path.rsplit('/',1)[1]))
             elif re.fullmatch(r'/preview/[a-z0-9-]+/',path):
@@ -395,6 +400,12 @@ class Handler(BaseHTTPRequestHandler):
                 self.json(self.server.store.create(),201)
             elif path=='/api/import':
                 self.json(self.server.store.import_url(data['url'],data['category']),201)
+            elif path=='/api/publish/check':
+                if data!={}:raise ValueError('잘못된 연결 확인 요청입니다.')
+                self.json(self.server.publisher.check_connection())
+            elif path=='/api/publish':
+                if not isinstance(data,dict) or set(data)!={'release_id'}:raise ValueError('배포할 공개본을 다시 확인해 주세요.')
+                self.json(self.server.publisher.start(data['release_id']),202)
             elif re.fullmatch(r'/api/posts/[a-z0-9-]+/save',path):
                 self.json(self.server.store.save(path.split('/')[3],data['entry'],data['revision']))
             elif re.fullmatch(r'/api/posts/[a-z0-9-]+/prepare',path):
@@ -415,6 +426,7 @@ class Handler(BaseHTTPRequestHandler):
 def make_server(root=ROOT, port=4180, state=None):
     server = LocalServer(('127.0.0.1',port),Handler)
     server.store = Store(root,state)
+    server.publisher = Publisher(root)
     server.host = '127.0.0.1:'+str(server.server_port)
     server.origin = 'http://'+server.host
     server.cookie_name = 'record_editor_'+str(server.server_port)

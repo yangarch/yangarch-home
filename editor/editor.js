@@ -48,6 +48,7 @@ async function run(action) {
     busy = false;
     document.querySelectorAll('button,input,textarea,select').forEach(control => { control.disabled = false; });
     refreshBlockButtons();
+    refreshPublishControls();
   }
 }
 function mayLeave() {
@@ -242,3 +243,60 @@ window.addEventListener('beforeunload',event => { if (dirty || importing) { even
   try { session = await api('/api/session'); await loadList(); }
   catch (error) { notice('편집기에 연결하지 못했습니다. 실행한 터미널과 주소를 확인해 주세요.',true); }
 })();
+
+let publication, publishConnected = false, publishing = false;
+function refreshPublishControls() {
+  $('confirm-publish').disabled = busy || !publishConnected || !publication;
+}
+async function checkPublisher() {
+  publishConnected = false;
+  $('publish-connection').textContent = '서버 연결을 확인하고 있습니다…';
+  try {
+    const reply = await api('/api/publish/check',{});
+    publishConnected = reply.configured;
+    $('publish-connection').textContent = reply.latest?.published_at ? '서버 연결됨 · 마지막 반영 '+new Date(reply.latest.published_at).toLocaleString('ko-KR') : '서버 연결됨';
+  } catch (error) {
+    $('publish-connection').textContent = error.message;
+  }
+  refreshPublishControls();
+}
+$('open-publish').addEventListener('click',() => run(async () => {
+  publication = null; publishConnected = false;
+  $('publish-result').textContent = '';
+  $('published-link').hidden = true;
+  $('publish-records').replaceChildren();
+  const value = await api('/api/publish');
+  publication = value;
+  if (!value.records.length) $('publish-records').append(node('p','준비된 글이 없습니다. 반영하면 공개 기록 목록이 비어 있게 됩니다.'));
+  for (const post of value.records) {
+    const row = node('div',undefined,'publish-record');
+    row.append(node('strong',post.title),node('small',`${post.date} · 사진 ${post.images}장`));
+    $('publish-records').append(row);
+  }
+  $('publish-dialog').showModal();
+  await checkPublisher();
+}));
+$('check-publish').addEventListener('click',() => run(checkPublisher));
+$('close-publish').addEventListener('click',() => $('publish-dialog').close());
+$('publish-dialog').addEventListener('cancel',event => { if (publishing) event.preventDefault(); });
+$('confirm-publish').addEventListener('click',() => run(async () => {
+  if (!publication || !publishConnected) return;
+  publishing = true;
+  $('publish-result').textContent = '공개 파일을 검사하고 있습니다…';
+  try {
+    const started = await api('/api/publish',{release_id:publication.release_id});
+    while (true) {
+      const {job} = await api('/api/publish/job');
+      if (!job || job.id !== started.id) throw new Error('배포 작업 상태를 확인하지 못했습니다. 연결 확인 후 실제 사이트를 확인해 주세요.');
+      $('publish-result').textContent = job.message;
+      if (job.status === 'done') {
+        $('published-link').hidden = false;
+        publishConnected = false;
+        notice('서버에 반영했습니다.');
+        break;
+      }
+      if (job.status === 'error') { $('published-link').hidden = false; throw new Error(job.message); }
+      await new Promise(resolve => setTimeout(resolve,1000));
+    }
+  } finally { publishing = false; }
+}));

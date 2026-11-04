@@ -157,6 +157,7 @@ class EditorTest(unittest.TestCase):
             return result
         try:
             self.assertEqual(request('/api/posts')[0],403)
+            self.assertEqual(request('/api/publish')[0],403)
             status,headers,body = request('/')
             self.assertEqual(status,200)
             self.assertIn('SameSite=Strict',headers['Set-Cookie'])
@@ -168,6 +169,8 @@ class EditorTest(unittest.TestCase):
             token = json.loads(body)['token']
             auth = {'Cookie':cookie,'Origin':server.origin,'X-Editor-Token':token,'Content-Type':'application/json'}
             self.assertEqual(request('/api/posts','POST',{'Cookie':cookie},{} )[0],403)
+            self.assertEqual(request('/api/publish','POST',{'Cookie':cookie},{'release_id':'example'})[0],403)
+            self.assertEqual(request('/api/publish/check','POST',{'Cookie':cookie},{})[0],403)
             self.assertEqual(request('/api/posts','POST',{**auth,'Origin':'https://evil.example'},{} )[0],403)
             self.assertEqual(request('/api/posts','POST',{**auth,'X-Editor-Token':'wrong'},{} )[0],403)
             self.assertEqual(request('/api/import','POST',{'Cookie':cookie},{'url':'https://example.com','category':'cycling'})[0],403)

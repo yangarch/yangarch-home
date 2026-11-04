@@ -8,7 +8,7 @@ from content_policy import EXAMPLE_TERMS, blocked_text, source_policy
 
 ROOT=Path(__file__).resolve().parents[1]
 ROOT_FILES={'.gitignore','README.md','CONTRIBUTING.md','SECURITY.md','package.json','requirements-editor.txt','start-editor.command'}
-EXACT_FILES={'content/public.json','content/records.example.json','content/privacy.example.json','deploy/install.sh','deploy/security-headers.conf','.github/workflows/ci.yml'}
+EXACT_FILES={'content/public.json','content/records.example.json','content/privacy.example.json','deploy/install.sh','deploy/setup-publisher.sh','deploy/security-headers.conf','.github/workflows/ci.yml'}
 SOURCE_TYPES={'assets':{'.css','.js','.svg'},'editor':{'.css','.js','.html'},'scripts':{'.py'},'tests':{'.py'},'docs':{'.md'}}
 SECRET=re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----|(?:AKIA|ASIA)[A-Z0-9]{16}|gh[pousr]_[A-Za-z0-9]{25,}|github_pat_[A-Za-z0-9_]{30,}|/Users/[A-Za-z0-9._-]+/')
 
