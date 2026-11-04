@@ -9,6 +9,7 @@ SERVICE_URLS = frozenset({
     'https://archgrab.yangarch.net/',
     'http://njc.yangarch.net/',
     'https://cyberfondo.yangarch.net/',
+    'https://cyber-topgoal.yangarch.net/',
 })
 
 
