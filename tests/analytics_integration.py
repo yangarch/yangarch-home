@@ -12,11 +12,12 @@ import tempfile
 import threading
 import time
 import uuid
+from urllib.request import Request,build_opener,ProxyHandler
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 from analytics_gateway import make_server
-from analytics_maintenance import sql,retention_sql
+from analytics_maintenance import sql,retention_sql,read_logs
 from analytics_nginx import HTTP_CONFIG,COLLECTOR,LOG_LINE
 from analytics_proxy import Server as Relay
 
@@ -55,13 +56,19 @@ ROLLBACK;
 
 def collection_test():
     site=str(uuid.uuid4());work=Path(tempfile.mkdtemp(prefix='home-analytics-qa-'))
-    relay=Relay(('127.0.0.1',4319),__import__('analytics_proxy').Handler)
+    relay=Relay(('127.0.0.1',0),__import__('analytics_proxy').Handler)
     relay_thread=threading.Thread(target=relay.serve_forever,daemon=True);relay_thread.start()
     sql(f"INSERT INTO website (website_id,name,domain) VALUES ('{site}','Collection fixture','example.com');")
     proc=None;gateway=None
     try:
         settings=work/'settings.json';settings.write_text(json.dumps({'website_id':site}))
         gateway=make_server(settings,0);gateway.public=ROOT/'dist'
+        class TestUpstream:
+            def open(self,request,timeout):
+                assert request.full_url=='http://127.0.0.1:4319/api/send'
+                target='http://127.0.0.1:'+str(relay.server_address[1])+'/api/send'
+                return build_opener(ProxyHandler({})).open(Request(target,data=request.data,headers=dict(request.header_items()),method='POST'),timeout=timeout)
+        gateway.opener=TestUpstream()
         thread=threading.Thread(target=gateway.serve_forever,daemon=True);thread.start()
         http_config=HTTP_CONFIG.replace('127.0.0.1 0; ::1 0;','127.0.0.1 1; ::1 1;')
         log_line=LOG_LINE.replace('/var/log/yangarch-home/access.log',str(work/'access.log'))
@@ -109,7 +116,12 @@ include {ROOT}/deploy/routes.conf;
         assert private_marker not in json.dumps(rows)
         raw=(work/'access.log').read_text();assert private_marker not in raw
         logs=[json.loads(line) for line in raw.splitlines()]
-        assert any(row['ua']=='Browser "quote" test' for row in logs)
+        visits=[row for row in logs if row['ua']=='Browser "quote" test']
+        assert len(visits)==1 and visits[0]['path']=='/', 'try_files replaced the original requested path'
+        fixture=work/'visitor.log';fixture.write_text(json.dumps(visits[0])+'\n')
+        counted=read_logs([fixture])
+        assert sum(row['page_requests'] for row in counted['days'].values())==1
+        assert sum(row['estimated_visitors'] for row in counted['days'].values())==1
         assert all(row['ip']=='127.0.0.1' for row in logs), 'Caller-supplied IP was trusted'
         assert any(row['referrer']=='https://example.com' for row in logs)
         statuses=[request('/__analytics','POST',payload,headers|{'DNT':'1'})[0] for _ in range(30)]

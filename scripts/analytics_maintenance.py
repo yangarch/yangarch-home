@@ -19,6 +19,12 @@ from analytics_runtime import CONFIG,STATE,DB,private_json
 LOG=Path('/var/log/yangarch-home/access.log')
 
 
+def page_path(value):
+    # Older nginx logs contain try_files' final URI rather than the requested URL.
+    if value.endswith('/index.html'):value=value[:-len('index.html')]
+    return value if PAGE.fullmatch(value) else None
+
+
 def sql(text):
     result=subprocess.run(['docker','exec','-i',DB,'psql','-X','-q','-t','-A','-v','ON_ERROR_STOP=1','-U','umami','-d','umami'],input=text.encode(),capture_output=True,timeout=120)
     if result.returncode:raise RuntimeError('Analytics maintenance database operation failed')
@@ -77,7 +83,7 @@ def read_logs(paths,now=None,max_bytes=64_000_000):
                         if status==429:by_day[day]['limited']+=1
                         if kind=='automated':by_day[day]['automated']+=1
                         if row.get('excluded')=='1':by_day[day]['excluded']+=1
-                        visitor=kind=='visitor' and row.get('excluded')!='1' and status in {200,304} and PAGE.fullmatch(path_value)
+                        visitor=kind=='visitor' and row.get('excluded')!='1' and row.get('method','GET')=='GET' and status in {200,304} and page_path(path_value)
                         if visitor:
                             by_day[day]['page_requests']+=1
                             unique[day].add(hashlib.sha256((str(row['ip'])+'\0'+str(row.get('ua',''))).encode()).digest())

@@ -11,11 +11,15 @@ map $http_user_agent $home_client {
     default visitor;
     ~*(bot|crawler|spider|curl|wget|python|headless|uptime|monitor) automated;
 }
+map $request_uri $home_request_path {
+    default "";
+    "~^(?<home_original_path>[^?]*)" $home_original_path;
+}
 map $http_referer $home_referrer {
     default "";
     "~^(?<home_ref_origin>https?://[A-Za-z0-9.-]+(?::[0-9]+)?)(?:/|$)" $home_ref_origin;
 }
-log_format home_events escape=json '{"v":1,"host":"yangarch.net","time":"$time_iso8601","ip":"$remote_addr","method":"$request_method","path":"$uri","status":$status,"bytes":$body_bytes_sent,"seconds":$request_time,"referrer":"$home_referrer","ua":"$http_user_agent","client":"$home_client","excluded":"$home_excluded"}';
+log_format home_events escape=json '{"v":1,"host":"yangarch.net","time":"$time_iso8601","ip":"$remote_addr","method":"$request_method","path":"$home_request_path","status":$status,"bytes":$body_bytes_sent,"seconds":$request_time,"referrer":"$home_referrer","ua":"$http_user_agent","client":"$home_client","excluded":"$home_excluded"}';
 limit_req_zone $binary_remote_addr zone=yangarch_events:1m rate=2r/s;
 '''
 COLLECTOR='''    location = /__analytics {

@@ -38,6 +38,7 @@ class PolicyTest(unittest.TestCase):
             self.assertEqual(origin_only(value),'')
 
     def test_paths_campaigns_and_event_values_are_bounded(self):
+        self.assertEqual(validate_event(event(path='/index.html'))['path'],'/')
         for path in ['/','/privacy/','/projects/training/','/records/','/records/entry/example-1/','/records/swimming/']:
             self.assertEqual(validate_event(event(path=path))['path'],path)
         for value in [event(path='/.env'),event(path='/?token=secret'),event(path='/records/../../secret/'),event(campaign={'gclid':'ad-id'}),event(campaign={'utm_source':'name@example.com'}),event(event='scroll',data={'percent':99}),event(event='active',data={'seconds':1}),event(event='filter',data={'category':'personal free text'}),event(event='link',data={'kind':'service','target':'https://unknown.example'})]:
@@ -98,6 +99,18 @@ class GatewayTest(unittest.TestCase):
 
 
 class RetentionTest(unittest.TestCase):
+    def test_counts_internal_index_uris_and_canonical_pages_without_assets_or_head(self):
+        now=datetime(2026,11,5,tzinfo=timezone.utc)
+        row=dict(time=now.isoformat(),ip='203.0.113.1',path='/',status=200,method='GET',ua='Browser',client='visitor',excluded='0')
+        paths=['/index.html','/projects/training/index.html','/records/entry/example-1/index.html','/records/swimming/','/privacy/index.html','/assets/site.js','/.env/index.html']
+        rows=[row|{'path':path} for path in paths]+[row|{'method':'HEAD'},row|{'path':'/index.html','status':301}]
+        with tempfile.TemporaryDirectory() as temp:
+            log=Path(temp)/'access.log';log.write_text('\n'.join(json.dumps(x) for x in rows))
+            values=read_logs([log],now)['days']['2026-11-05']
+            self.assertEqual(values['requests'],9)
+            self.assertEqual(values['page_requests'],5)
+            self.assertEqual(values['estimated_visitors'],1)
+
     def test_raw_logs_expire_owner_and_bots_are_excluded_from_estimates(self):
         now=datetime(2026,11,5,tzinfo=timezone.utc)
         row=dict(time=now.isoformat(),ip='203.0.113.1',path='/',status=200,ua='Browser',client='visitor',excluded='0')

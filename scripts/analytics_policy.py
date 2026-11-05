@@ -28,6 +28,7 @@ def validate_event(data):
     keys={'event','path','screen','language','timezone','referrer','campaign','data'}
     if not isinstance(data,dict) or set(data)-keys:raise ValueError('Unexpected analytics field')
     event=data.get('event');path=data.get('path')
+    if path=='/index.html':path='/'
     if event not in EVENTS or not isinstance(path,str) or len(path)>200 or not PAGE.fullmatch(path):raise ValueError('Unknown event or page')
     screen=data.get('screen','')
     if not isinstance(screen,str) or not re.fullmatch(r'[1-9][0-9]{0,4}x[1-9][0-9]{0,4}',screen):raise ValueError('Invalid screen size')
